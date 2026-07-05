@@ -212,47 +212,48 @@ export default function InterviewReportPage() {
   
 
     async function downloadResume() {
-      try {
-        setIsGeneratingPdf(true);
+    // Open a blank tab immediately, synchronously, within the click event
+    const newTab = window.open("", "_blank");
 
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/resume/pdf`,
-          {
-            resume: reportData.resume,
-            selfDescription: reportData.selfDescription,
-            jobDescription: reportData.jobDescription,
-          },
-          {
-            responseType: "blob",
-            withCredentials: true,
-          }
-        );
+    try {
+      setIsGeneratingPdf(true);
 
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-
-        // Detect mobile — open in new tab instead of forcing download
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-        if (isMobile) {
-          window.open(url, "_blank");
-        } else {
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "Resume.pdf";
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/resume/pdf`,
+        {
+          resume: reportData.resume,
+          selfDescription: reportData.selfDescription,
+          jobDescription: reportData.jobDescription,
+        },
+        {
+          responseType: "blob",
+          withCredentials: true,
         }
+      );
 
-        // Delay revoke slightly so the new tab has time to load the blob
-        setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setIsGeneratingPdf(false);
+      if (newTab) {
+        newTab.location.href = url;
+      } else {
+        // Popup was blocked — fallback to normal download link
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "Resume.pdf";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
       }
+
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+
+    } catch (err) {
+      console.log(err);
+      if (newTab) newTab.close(); // clean up the blank tab if the request failed
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   }
 
   return (
@@ -284,14 +285,16 @@ export default function InterviewReportPage() {
             ))}
           </nav>
 
-           <button
+
+        
+          <button
             onClick={downloadResume}
             disabled={isGeneratingPdf}
-            className={`ml-3 mt-6 inline-flex items-center gap-1  px-3 py-2 rounded-xl transition-all duration-300
+            className={`text-sm mt-6 mr-1 inline-flex items-center gap-1  px-3 py-1 rounded-xl transition-all duration-300
               ${
                 isGeneratingPdf
                   ? "bg-slate-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:-translate-y-0.5 hover:shadow-lg"
+                  : "bg-gradient-to-r from-blue-400 to-purple-500 hover:-translate-y-0.5 hover:shadow-lg"
               } text-white`}
           >
             {isGeneratingPdf ? (
@@ -310,7 +313,7 @@ export default function InterviewReportPage() {
 
         <Link 
           to='/' 
-          className="ml-3 mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-md md:text-base font-small px-3 py-2 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-purple-200 hover:-translate-y-0.5 transition-all duration-300"
+          className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-400 text-white text-sm  font-small px-3 py-1 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-purple-200 hover:-translate-y-0.5 transition-all duration-300"
           >
           <ArrowLeft className="w-4 h-4" />
           Back to the Home
