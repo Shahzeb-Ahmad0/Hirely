@@ -211,49 +211,40 @@ export default function InterviewReportPage() {
   },[]);
   
 
-    async function downloadResume() {
-    // Open a blank tab immediately, synchronously, within the click event
-    const newTab = window.open("", "_blank");
+  async function downloadResume() {
+      try {
+        setIsGeneratingPdf(true);
 
-    try {
-      setIsGeneratingPdf(true);
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/resume/pdf`,
+          {
+            resume: reportData.resume,
+            selfDescription: reportData.selfDescription,
+            jobDescription: reportData.jobDescription,
+          },
+          {
+            responseType: "blob",
+            withCredentials: true,
+          }
+        );
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/resume/pdf`,
-        {
-          resume: reportData.resume,
-          selfDescription: reportData.selfDescription,
-          jobDescription: reportData.jobDescription,
-        },
-        {
-          responseType: "blob",
-          withCredentials: true,
-        }
-      );
+        const url = window.URL.createObjectURL(
+          new Blob([response.data], { type: "application/pdf" })
+        );
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-
-      if (newTab) {
-        newTab.location.href = url;
-      } else {
-        // Popup was blocked — fallback to normal download link
         const link = document.createElement("a");
         link.href = url;
         link.download = "Resume.pdf";
         document.body.appendChild(link);
         link.click();
+
         link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setIsGeneratingPdf(false);
       }
-
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-
-    } catch (err) {
-      console.log(err);
-      if (newTab) newTab.close(); // clean up the blank tab if the request failed
-    } finally {
-      setIsGeneratingPdf(false);
-    }
   }
 
   return (
