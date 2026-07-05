@@ -211,7 +211,7 @@ export default function InterviewReportPage() {
   },[]);
   
 
-  async function downloadResume() {
+    async function downloadResume() {
       try {
         setIsGeneratingPdf(true);
 
@@ -228,18 +228,26 @@ export default function InterviewReportPage() {
           }
         );
 
-        const url = window.URL.createObjectURL(
-          new Blob([response.data], { type: "application/pdf" })
-        );
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
 
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "Resume.pdf";
-        document.body.appendChild(link);
-        link.click();
+        // Detect mobile — open in new tab instead of forcing download
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        link.remove();
-        window.URL.revokeObjectURL(url);
+        if (isMobile) {
+          window.open(url, "_blank");
+        } else {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "Resume.pdf";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+
+        // Delay revoke slightly so the new tab has time to load the blob
+        setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+
       } catch (err) {
         console.log(err);
       } finally {
@@ -279,7 +287,7 @@ export default function InterviewReportPage() {
            <button
             onClick={downloadResume}
             disabled={isGeneratingPdf}
-            className={`ml-3 mt-6 inline-flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-300
+            className={`ml-3 mt-6 inline-flex items-center gap-1  px-3 py-2 rounded-xl transition-all duration-300
               ${
                 isGeneratingPdf
                   ? "bg-slate-400 cursor-not-allowed"
@@ -300,10 +308,13 @@ export default function InterviewReportPage() {
           </button>
 
 
-          
-            <Link to='/' className="ml-3 mt-6 inline-flex  rounded-xl items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm md:text-base font-sm px-3 py-2 shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-purple-200 hover:-translate-y-0.5 transition-all duration-300">
-            <ArrowLeft className="w-4 h-4" />
-            Home</Link>
+        <Link 
+          to='/' 
+          className="ml-3 mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-md md:text-base font-small px-3 py-2 rounded-xl shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-purple-200 hover:-translate-y-0.5 transition-all duration-300"
+          >
+          <ArrowLeft className="w-4 h-4" />
+          Back to the Home
+        </Link>
         
         </aside>
 

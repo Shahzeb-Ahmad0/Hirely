@@ -285,7 +285,7 @@ function AnalyzeCard() {
             className="text-2xl md:text-3xl font-semibold text-slate-900 mb-8"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            Analyze your resume
+            Analyze your your strengths & weakness
           </h2>
 
           <div className="flex flex-col gap-6">
