@@ -5,8 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import chromium from "@sparticuz/chromium";
-import puppeteerCore from "puppeteer-core";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GEN_API_KEY,
@@ -63,19 +62,24 @@ async function generateInterviewReport({resume,selfDescription,jobDescription}) 
 async function generatePdfFromHtml(htmlContent) {
 
     const isProd = process.env.NODE_ENV === "production";
-    console.log("isProd:", process.env.NODE_ENV === "production");
 
-    const browser = isProd
-        ? await puppeteerCore.launch({
-              args: [...chromium.args, "--disable-dev-shm-usage"],
-              executablePath: await chromium.executablePath(),
-              headless: chromium.headless,
-          })
-        : await puppeteer.launch({
-              headless: "new",
-              executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-              args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-          });
+    let browser;
+    if (isProd) {
+        const execPath = await chromium.executablePath();
+        console.log("Resolved chromium executablePath:", execPath);   // ← add this
+
+        browser = await puppeteer.launch({
+            args: [...chromium.args, "--disable-dev-shm-usage"],
+            executablePath: execPath,
+            headless: chromium.headless,
+        });
+    } else {
+        browser = await puppeteer.launch({
+            headless: "new",
+            executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        });
+    }
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" })
